@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "distribuidoraomar-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-06-27",
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "distribuidoraomar-db",
+      "database_id": "baf97d81-9a00-49b9-8736-cbcc5b8ad1ac"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "IMG",
+      "bucket_name": "distribuidoraomar-img"
+    }
+  ]
+}

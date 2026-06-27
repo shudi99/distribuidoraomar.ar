@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Distribuidora Omar · Catálogo</title>
+  <meta name="description" content="Catálogo online de Distribuidora Omar: artículos para el hogar, cocina, baño, jardín, decoración y limpieza.">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta property="og:title" content="Distribuidora Omar · Catálogo">
+  <meta property="og:description" content="Artículos para el hogar, cocina, baño, jardín, decoración y limpieza.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://distribuidoraomar.ar/">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,6 +42,14 @@
     .form-input:focus { border-color: #c9a96e; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
     @media (max-width: 600px) { .grid { grid-template-columns: 1fr 1fr; gap: 12px; } }
+    .admin-hidden { display: none !important; }
+    .btn-whatsapp { background:#25d366;color:#0b2b16;border:none;border-radius:8px;cursor:pointer;
+                    padding:10px 14px;font-weight:700;font-size:13px;text-decoration:none;display:inline-flex;
+                    align-items:center;justify-content:center;gap:6px;transition:filter .2s,transform .2s; }
+    .btn-whatsapp:hover { filter: brightness(0.96); transform: translateY(-1px); }
+    .card-actions { display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:12px; }
+    .price { font-size:22px;font-weight:700;color:#c9a96e;font-family:'Playfair Display',serif; }
+    @media (max-width: 600px) { .card-actions { flex-direction:column;align-items:stretch; } .btn-whatsapp{width:100%;} }
     @media (max-width: 400px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -54,7 +68,10 @@
       <div id="modal-desc" style="font-size:15px;color:#555;line-height:1.7;margin-bottom:20px"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div id="modal-price" style="font-size:30px;font-weight:700;color:#c9a96e;font-family:'Playfair Display',serif"></div>
-        <button onclick="closeModalBtn()" style="background:#1a1a1a;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px">Cerrar</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button id="modal-wa" class="btn-whatsapp" onclick="consultWhatsApp(window.currentModalProductId)">WhatsApp</button>
+          <button onclick="closeModalBtn()" style="background:#1a1a1a;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px">Cerrar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -70,7 +87,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <div id="catalog-count" style="font-size:13px;color:#888"></div>
-        <button class="btn-admin" onclick="showAdmin()">Admin</button>
+        <button class="btn-admin admin-hidden" onclick="showAdmin()">Admin</button>
       </div>
     </div>
   </header>
@@ -115,9 +132,6 @@
       <button onclick="checkPin()" style="width:100%;padding:12px;background:#c9a96e;border:none;border-radius:8px;color:#1a1a1a;font-weight:700;font-size:15px;cursor:pointer">Ingresar</button>
       <div style="text-align:center;margin-top:16px">
         <button onclick="showCatalog()" style="background:none;border:none;color:#555;cursor:pointer;font-size:13px">← Volver al catálogo</button>
-      </div>
-      <div style="margin-top:20px;padding:12px;background:#1e1e1e;border-radius:8px;font-size:11px;color:#555;text-align:center">
-        PIN por defecto: <span style="color:#c9a96e">omar1234</span>
       </div>
     </div>
   </div>
@@ -200,6 +214,15 @@
 </div>
 
 <script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+// Si se carga un número, los botones abren chat directo. Formato: 549376XXXXXXX, sin + ni espacios.
+// Si queda vacío, WhatsApp abre solo con el texto preparado.
+const WHATSAPP_NUMBER = "";
+
+// El panel actual es local/demo: guarda cambios en localStorage del navegador.
+// No usar como seguridad real hasta migrar a Worker + D1 + R2.
+const ADMIN_PIN = "cambiar-este-pin";
+
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const DEMO_PRODUCTS = [
   {
@@ -247,7 +270,6 @@ const CATEGORIES = [
   { id: "otros",     label: "Otros",       icon: "📦" },
 ];
 
-const ADMIN_PIN = "omar1234";
 let products = [...DEMO_PRODUCTS];
 let activeCategory = "all";
 let editingId = null;
@@ -271,6 +293,20 @@ function saveProducts() {
 // ─── FORMAT ──────────────────────────────────────────────────────────────────
 function formatPrice(n) {
   return "$ " + Number(n).toLocaleString("es-AR");
+}
+
+function buildWhatsAppText(p) {
+  return `Hola, quisiera consultar por este artículo de Distribuidora Omar: ${p.title} - ${formatPrice(p.price)}`;
+}
+
+function consultWhatsApp(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const text = encodeURIComponent(buildWhatsAppText(p));
+  const url = WHATSAPP_NUMBER
+    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`
+    : `https://wa.me/?text=${text}`;
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 // ─── VIEWS ───────────────────────────────────────────────────────────────────
@@ -325,7 +361,7 @@ function renderCatalog() {
   grid.innerHTML = filtered.map(p => {
     const cat = CATEGORIES.find(c => c.id === p.category);
     const imgHtml = p.image
-      ? `<img class="card-img" src="${p.image}" alt="${escHtml(p.title)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`
+      ? `<img class="card-img" loading="lazy" decoding="async" src="${p.image}" alt="${escHtml(p.title)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`
       : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:48px">${cat?.icon || "📦"}</div>`;
     const descShort = p.description.length > 80 ? p.description.slice(0, 80) + "…" : p.description;
     return `<div class="card" onclick="openModal('${p.id}')">
@@ -338,7 +374,10 @@ function renderCatalog() {
       <div style="padding:16px 18px 20px">
         <div style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:6px;line-height:1.3">${escHtml(p.title)}</div>
         <div style="font-size:13px;color:#777;line-height:1.5;margin-bottom:14px">${escHtml(descShort)}</div>
-        <div style="font-size:22px;font-weight:700;color:#c9a96e;font-family:'Playfair Display',serif">${formatPrice(p.price)}</div>
+        <div class="card-actions">
+          <div class="price">${formatPrice(p.price)}</div>
+          <button class="btn-whatsapp" onclick="event.stopPropagation();consultWhatsApp('${p.id}')">WhatsApp</button>
+        </div>
       </div>
     </div>`;
   }).join("");
@@ -358,6 +397,7 @@ function openModal(id) {
   const p = products.find(x => x.id === id);
   if (!p) return;
   const cat = CATEGORIES.find(c => c.id === p.category);
+  window.currentModalProductId = id;
   const overlay = document.getElementById("modal-overlay");
   document.getElementById("modal-cat").textContent = (cat?.icon || "") + " " + (cat?.label || "");
   document.getElementById("modal-title").textContent = p.title;
@@ -561,7 +601,10 @@ function showToast(msg) {
 // ─── KEYBOARD ────────────────────────────────────────────────────────────────
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeModalBtn();
+  if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "a") showAdmin();
 });
+
+if (location.hash === "#admin") showAdmin();
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 loadProducts();
